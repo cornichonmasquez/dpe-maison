@@ -1,7 +1,12 @@
 # DPE Maison
 
 Estime l'étiquette DPE (énergie et climat) d'une **maison individuelle existante** avec la méthode légale
-**3CL-DPE 2021**, puis simule l'effet de travaux. Tout est calculé dans le navigateur : aucune donnée n'est envoyée.
+**3CL-DPE 2021**, puis simule l'effet de travaux. Tout est calculé dans le navigateur : la saisie n'est jamais envoyée.
+
+**Plan sur photo aérienne (facultatif)** : on peut dessiner le contour de la maison sur la photo aérienne de l'IGN, ou
+reprendre le contour d'un bâtiment de la BD TOPO. Les longueurs et orientations des façades, la surface au sol et le
+périmètre en sont déduits. Ce mode interroge les services de l'IGN (géocodeur, tuiles, WFS) : l'adresse cherchée et la
+zone affichée leur sont transmises, rien d'autre.
 
 > Estimation indicative, **non opposable**. Elle ne remplace pas un DPE réalisé par un diagnostiqueur certifié.
 
@@ -24,6 +29,7 @@ npm run typecheck
 | `src/engine` | Appel du moteur Open3CL et résultat lisible (étiquettes, postes, coefficients électricité) |
 | `src/travaux` | Catalogue de chantiers simulables |
 | `src/import` | Import d'un DPE ADEME (XML) vers la saisie |
+| `src/geo` | Contour de la maison : géométrie, services IGN, application du plan à la saisie |
 | `app` | Interface mobile : accueil, 5 étapes de saisie, résultat |
 | `scripts` | Validation sur des DPE réels, calibrage, diagnostics |
 | `docs` | Rapport de validation |

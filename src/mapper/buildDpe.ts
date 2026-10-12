@@ -158,11 +158,14 @@ export function buildDpe(maison: Maison, options: OptionsBuild = {}): ResultatBu
 
   // Ouvertures : placement sur un mur
   const placement = new Map<string, string>(); // id ouverture/porte -> id mur
+  // Plusieurs murs peuvent avoir la même orientation (plan dessiné) : on pose les ouvertures sur le plus grand.
+  const lePlusGrand = (liste: Mur[]): Mur | undefined =>
+    liste.reduce<Mur | undefined>((a, b) => (a === undefined || b.surfaceBrute > a.surfaceBrute ? b : a), undefined);
   const murPourOrientation = (orientation: string, id?: string): Mur | undefined =>
     id
       ? maison.murs.find((m) => m.id === id)
-      : (maison.murs.find((m) => m.orientation === orientation && m.adjacence === 'exterieur') ??
-        maison.murs.find((m) => m.orientation === orientation));
+      : (lePlusGrand(maison.murs.filter((m) => m.orientation === orientation && m.adjacence === 'exterieur')) ??
+        lePlusGrand(maison.murs.filter((m) => m.orientation === orientation)));
 
   const surfaceOuvertePar = new Map<string, number>();
   const ajouteOuvert = (murId: string, s: number) =>
@@ -532,7 +535,7 @@ function estimerPontsThermiques(
 
   for (const mur of maison.murs) {
     if (mur.adjacence === 'logement_voisin' || mur.adjacence === 'local_non_habitation') continue;
-    const longueur = mur.surfaceBrute / hauteurTotale;
+    const longueur = mur.longueurM ?? mur.surfaceBrute / hauteurTotale;
     const ref = `mur_${mur.id}`;
     if (planchers[0]) {
       ajoute(`Mur ${mur.id} / Plancher bas`, 1, longueur * f.planchierBas, ref, `plancher_bas_${planchers[0].id}`);

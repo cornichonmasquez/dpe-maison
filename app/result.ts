@@ -127,7 +127,7 @@ export function montrerResultat(racine: HTMLElement, ctx: Contexte): void {
     `<button class="bouton secondaire" data-action="imprimer">Imprimer ou enregistrer en PDF</button></section>` +
     `<p class="note">Estimation indicative, non opposable : elle ne remplace pas un DPE réalisé par un diagnostiqueur certifié. ` +
     `Méthode 3CL-DPE 2021, moteur Open3CL. Les valeurs inconnues reçoivent la valeur par défaut de la méthode et les ponts thermiques sont estimés. ` +
-    `Aucune donnée n’est envoyée : tout est calculé dans votre navigateur.</p>`;
+    `Votre saisie n’est jamais envoyée : tout est calculé dans votre navigateur. Seul le plan sur photo aérienne, facultatif, interroge l’IGN.</p>`;
 
   // Échelles
   const construire = (id: string, seuils: number[], unite: string) => {

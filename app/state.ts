@@ -1,6 +1,7 @@
 // État de l'application : la maison en cours de saisie, l'étape, les chantiers actifs. Persisté localement.
 
 import type {
+  AdjacenceMur,
   Cardinal,
   Maison,
   Mur,
@@ -16,6 +17,8 @@ export interface Etat {
   chantiers: string[];
   /** Tant que l'utilisateur n'a pas touché aux parois, on peut régénérer des valeurs par défaut cohérentes. */
   paroisGenerees: boolean;
+  /** Contour dessiné sur la photo aérienne (s'il y en a un). */
+  plan?: { anneau: [number, number][]; adjacences: AdjacenceMur[] };
 }
 
 const CLE = 'dpe-maison:v1';

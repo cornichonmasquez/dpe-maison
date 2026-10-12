@@ -4,6 +4,7 @@
 import type { Maison, Isolation } from '../src/model/house.ts';
 import { ZONE_PAR_DEPARTEMENT } from '../src/data/departements.ts';
 import { departementDepuisCodePostal } from '../src/mapper/buildDpe.ts';
+import { aire, versMetres } from '../src/geo/geometrie.ts';
 import * as V from './vocab.ts';
 import type { Opt } from './vocab.ts';
 
@@ -141,7 +142,45 @@ export function etapeMaison(m: Maison): string {
 
 // --- Étape 2 : murs ----------------------------------------------------------------------------
 
-export function etapeMurs(m: Maison): string {
+function apercuPlan(anneau: [number, number][]): string {
+  const p = versMetres(anneau);
+  const xs = p.map((q) => q.x);
+  const ys = p.map((q) => q.y);
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const L = 240;
+  const H = 130;
+  const k = Math.min((L - 20) / Math.max(x1 - x0, 1), (H - 20) / Math.max(y1 - y0, 1));
+  const pts = p.map((q) => `${(10 + (q.x - x0) * k).toFixed(1)},${(H - 10 - (q.y - y0) * k).toFixed(1)}`).join(' ');
+  return `<svg class="plan-apercu" viewBox="0 0 ${L} ${H}" role="img" aria-label="Contour de la maison, nord en haut"><polygon points="${pts}" /></svg>`;
+}
+
+function cartePlan(m: Maison, plan?: { anneau: [number, number][]; adjacences: string[] }): string {
+  if (!plan) {
+    return (
+      `<section class="carte-saisie carte-plan"><header class="carte-tete"><h3>Plan de la maison</h3></header>` +
+      `<p class="aide-plan">Dessinez le contour de la maison sur la photo aérienne : les longueurs et les orientations des façades sont calculées pour vous.</p>` +
+      `<button type="button" class="bouton large" data-action="plan">Dessiner sur le plan</button>` +
+      `<p class="aide-plan petit">La photo vient de l’IGN : l’adresse cherchée et la zone affichée sont envoyées à leurs serveurs. Facultatif : vous pouvez aussi décrire les murs à la main, plus bas.</p></section>`
+    );
+  }
+  const a = aire(versMetres(plan.anneau as any));
+  // Cohérence : surface habitable ≈ empreinte × niveaux × 0,9 (murs et cloisons déduits)
+  const estimee = Math.round(a * m.niveaux * 0.9);
+  const incoherent = Math.abs(m.surfaceHabitable - estimee) / estimee > 0.35;
+  const alerte = incoherent
+    ? `<p class="encart">L’empreinte de ${Math.round(a)} m² sur ${m.niveaux} niveau${m.niveaux > 1 ? 'x' : ''} correspond plutôt à environ <b>${estimee} m² habitables</b>, ` +
+      `alors que vous avez saisi ${m.surfaceHabitable} m². La surface habitable sert de référence au calcul : corrigez-la si besoin.` +
+      ` <button type="button" class="bouton secondaire" data-action="surface-plan" data-valeur="${estimee}">Utiliser ${estimee} m²</button></p>`
+    : '';
+  return (
+    `<section class="carte-saisie carte-plan"><header class="carte-tete"><h3>Plan de la maison</h3>` +
+    `<button type="button" class="lien" data-action="plan">Modifier le plan</button></header>` +
+    apercuPlan(plan.anneau) +
+    `<p class="aide-plan"><b>Empreinte ${Math.round(a)} m²</b> · ${plan.anneau.length} façades. Complétez ci-dessous les caractéristiques de chaque mur.</p>${alerte}</section>`
+  );
+}
+
+export function etapeMurs(m: Maison, plan?: { anneau: [number, number][]; adjacences: string[] }): string {
   const lnc = new Set(['garage', 'cellier', 'sous_sol', 'local_non_chauffe', 'veranda']);
   const cartes = m.murs
     .map((mur, i) => {
@@ -159,11 +198,15 @@ export function etapeMurs(m: Maison): string {
         (epaisseurUtile ? nombre(`${p}.epaisseurCm`, 'Épaisseur du mur (sans isolant)', mur.epaisseurCm, { unite: 'cm', min: 5 }, true) : '') +
         blocIsolation(`${p}.isolation`, mur.isolation) +
         selection(`${p}.doublage`, 'Doublage intérieur', V.DOUBLAGE, mur.doublage ?? 'inconnu');
-      return carte(`Mur ${i + 1}`, corps, m.murs.length > 1 ? { type: 'murs', index: i } : undefined);
+      const titre =
+        `Mur ${i + 1}` +
+        (mur.longueurM ? ` · ${V.libelle(V.ORIENTATIONS, mur.orientation)} · ${mur.longueurM.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} m` : '');
+      return carte(titre, corps, m.murs.length > 1 ? { type: 'murs', index: i } : undefined);
     })
     .join('');
   return (
     `<h2>Murs</h2><p class="intro">Un mur par façade, ou davantage si elle est hétérogène (extension, garage…).</p>` +
+    cartePlan(m, plan) +
     cartes +
     bouton('ajouter', 'Ajouter un mur', 'murs')
   );

@@ -81,6 +81,8 @@ export interface Mur {
   orientation: Cardinal;
   /** Surface brute (m²), fenêtres et portes comprises : longueur × hauteur. */
   surfaceBrute: number;
+  /** Longueur de la façade (m), si elle est connue (plan dessiné). Sinon déduite de la surface. */
+  longueurM?: number;
   adjacence: AdjacenceMur;
   materiau: MurMateriau;
   /** Épaisseur du mur porteur en cm (hors isolant). Défaut selon le matériau. */

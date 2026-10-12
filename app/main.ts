@@ -3,6 +3,7 @@
 import { XMLParser } from 'fast-xml-parser';
 import { calculer } from '../src/engine/calculate.ts';
 import { ademeVersMaison } from '../src/import/ademe.ts';
+import { appliquerPlan } from '../src/geo/versMaison.ts';
 import type { Maison } from '../src/model/house.ts';
 import { maisonTemoin } from '../test/fixtures/maison-temoin-saisie.ts';
 import * as F from './form.ts';
@@ -25,7 +26,13 @@ import {
 
 const LETTRES_COULEUR = (l: string) => `var(--l${l})`;
 const ETAPES = ['Maison', 'Murs', 'Sol et toit', 'Fenêtres', 'Systèmes', 'Résultat'];
-const RENDUS: ((m: Maison) => string)[] = [F.etapeMaison, F.etapeMurs, F.etapeSolToit, F.etapeOuvertures, F.etapeSystemes];
+const RENDUS: ((e: Etat) => string)[] = [
+  (e) => F.etapeMaison(e.maison),
+  (e) => F.etapeMurs(e.maison, e.plan),
+  (e) => F.etapeSolToit(e.maison),
+  (e) => F.etapeOuvertures(e.maison),
+  (e) => F.etapeSystemes(e.maison)
+];
 
 const contenu = document.getElementById('contenu')!;
 const nav = document.getElementById('nav')!;
@@ -70,7 +77,7 @@ function montrerAccueil(): void {
   contenu.innerHTML =
     `<section class="accueil"><h1>Quelle étiquette pour votre maison, et que changent des travaux ?</h1>` +
     `<p>Décrivez votre maison en quelques minutes. L’outil calcule l’étiquette énergie et climat avec la méthode officielle du DPE, ` +
-    `puis simule des travaux. Tout reste sur votre téléphone.</p><div class="actions">` +
+    `puis simule des travaux. Votre saisie reste sur votre téléphone ; seul le plan satellite, facultatif, interroge l’IGN.</p><div class="actions">` +
     (reprise ? `<button class="bouton large" data-action="reprendre">Reprendre ma saisie</button>` : '') +
     `<button class="bouton ${reprise ? 'secondaire' : ''} large" data-action="nouvelle">Décrire ma maison</button>` +
     `<button class="bouton secondaire large" data-action="exemple">Voir un exemple : maison de 1996</button>` +
@@ -116,7 +123,7 @@ function afficher(): void {
       allerEtape: (n) => allerA(n)
     });
   } else {
-    contenu.innerHTML = progression() + `<div class="formulaire">${RENDUS[etat.etape](etat.maison)}</div>`;
+    contenu.innerHTML = progression() + `<div class="formulaire">${RENDUS[etat.etape](etat)}</div>`;
   }
   window.scrollTo({ top: 0 });
 }
@@ -126,7 +133,7 @@ function rendreEtape(): void {
   const haut = window.scrollY;
   const actif = document.activeElement as HTMLElement | null;
   const chemin = actif?.dataset?.path;
-  contenu.innerHTML = progression() + `<div class="formulaire">${RENDUS[etat.etape](etat.maison)}</div>`;
+  contenu.innerHTML = progression() + `<div class="formulaire">${RENDUS[etat.etape](etat)}</div>`;
   window.scrollTo({ top: haut });
   if (chemin) contenu.querySelector<HTMLElement>(`[data-path="${chemin}"]`)?.focus({ preventScroll: true });
 }
@@ -252,15 +259,48 @@ function action(nom: string, el: HTMLElement): void {
     case 'supprimer':
       m[liste!].splice(Number(el.dataset.index), 1);
       break;
+    case 'surface-plan':
+      m.surfaceHabitable = Number(el.dataset.valeur);
+      break;
     case 'regenerer':
       if (window.confirm('Remplacer les murs, le sol, le toit et les fenêtres par des valeurs estimées ?')) {
         genererParois(etat.maison);
+        delete etat.plan;
       }
       break;
   }
   enregistrer();
   rendreEtape();
   majPuce();
+}
+
+// --- Plan sur photo aérienne -------------------------------------------------------------------
+
+async function ouvrirEcranPlan(): Promise<void> {
+  if (!etat) return;
+  const { ouvrirPlan } = await import('./plan.ts');
+  const courant = etat;
+  ouvrirPlan(
+    {
+      anneau: courant.plan?.anneau,
+      adjacences: courant.plan?.adjacences,
+      codePostal: courant.maison.codePostal,
+      niveaux: courant.maison.niveaux,
+      hauteurSousPlafondM: courant.maison.hauteurSousPlafondM
+    },
+    (res) => {
+      const m = courant.maison;
+      const ind = res.indices;
+      if (ind.etages && courant.paroisGenerees && ind.etages >= 1 && ind.etages <= 4) m.niveaux = ind.etages;
+      if (ind.altitudeSolM !== undefined && m.altitudeM === undefined) m.altitudeM = Math.round(ind.altitudeSolM);
+      if (ind.codePostal && !m.codePostal) m.codePostal = ind.codePostal;
+      appliquerPlan(m, { anneau: res.anneau, adjacences: res.adjacences }, { regenererOuvertures: courant.paroisGenerees });
+      courant.plan = { anneau: res.anneau, adjacences: res.adjacences };
+      enregistrer();
+      rendreEtape();
+      majPuce();
+    }
+  );
 }
 
 // --- Fichiers ----------------------------------------------------------------------------------
@@ -342,6 +382,9 @@ document.addEventListener('click', (e) => {
       case 'reprendre':
         etat = charger();
         afficher();
+        return;
+      case 'plan':
+        void ouvrirEcranPlan();
         return;
       case 'exporter':
         exporter();

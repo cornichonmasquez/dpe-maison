@@ -234,6 +234,37 @@
   .puce-etiquette.sombre { color: var(--ink); }
   .puce-etiquette.vide { background: #d8e0e5; color: var(--muted); font-size: 16px; }
 
+
+  /* --- Plan sur photo aérienne ---------------------------------------------------------------- */
+  .carte-plan .aide-plan { margin: 0 0 12px; font-size: 14.5px; }
+  .carte-plan .aide-plan.petit { margin: 10px 0 12px; font-size: 12.5px; color: var(--muted); }
+  .plan-apercu { width: 100%; max-height: 150px; background: #dde3f7; border-radius: 10px; margin-bottom: 10px; }
+  .plan-apercu polygon { fill: #2f3fe0; fill-opacity: .25; stroke: #2f3fe0; stroke-width: 2.5; stroke-linejoin: round; }
+
+  .plan { position: fixed; inset: 0; z-index: 30; background: var(--ground); display: flex; flex-direction: column; overflow-y: auto; }
+  .plan-tete { display: flex; justify-content: space-between; align-items: center; padding: 12px var(--gutter) 4px; }
+  .plan-info { margin: 0; padding: 0 var(--gutter) 8px; font-size: 12.5px; color: var(--muted); }
+  .plan-recherche { display: flex; gap: 8px; padding: 0 var(--gutter) 8px; }
+  .plan-recherche input { flex: 1; min-width: 0; }
+  .plan-recherche .bouton { min-height: 48px; padding: 0 14px; }
+  .plan-resultats { list-style: none; margin: 0 var(--gutter) 8px; padding: 0; background: var(--card); border-radius: 12px; overflow: hidden; }
+  .plan-resultats li + li { border-top: 1px solid var(--line); }
+  .plan-resultats button { all: unset; display: block; width: 100%; box-sizing: border-box; padding: 12px 14px; cursor: pointer; font-size: 15px; }
+  .plan-resultats button:focus-visible { outline: 3px solid var(--after); outline-offset: -3px; }
+  .plan-attente { padding: 12px 14px; color: var(--muted); font-size: 14.5px; }
+  .plan-carte { flex: none; height: 46vh; min-height: 280px; margin: 0; background: #cfd8dc; }
+  .plan-aide { padding: 8px var(--gutter) 0; font-size: 14px; }
+  .plan-actions { display: flex; gap: 8px; padding: 8px var(--gutter); }
+  .plan-actions .bouton { flex: 1; min-height: 44px; }
+  .plan-aretes { padding: 0 var(--gutter); }
+  .plan-resume { margin: 4px 0 8px; font-size: 14px; }
+  .plan-arete { display: grid; gap: 6px; background: var(--card); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 14px; }
+  .plan-arete select { min-height: 42px; }
+  .plan-erreur { margin: 8px var(--gutter); padding: 10px 12px; background: #fde7e5; color: #7a1812; border-radius: 10px; font-size: 14px; }
+  .plan-pied { position: sticky; bottom: 0; padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom)); background: var(--ground); border-top: 1px solid var(--line); margin-top: auto; }
+  .plan-sommet span { display: block; width: 24px; height: 24px; margin: 2px; border-radius: 50%; background: #fff; border: 3px solid #2f3fe0; box-sizing: border-box; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+  .plan-etiquette span { position: absolute; transform: translate(-50%, -50%); background: rgba(16,34,43,.82); color: #fff; font-size: 12px; font-weight: 600; padding: 1px 6px; border-radius: 99px; white-space: nowrap; }
+
   @media print {
     body { background: #fff; }
     header, .nav, .progression, .actions, .chantier .interrupteur { display: none !important; }
