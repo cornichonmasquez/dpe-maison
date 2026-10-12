@@ -237,7 +237,13 @@ function surChamp(el: HTMLInputElement | HTMLSelectElement): void {
   enregistrer();
   majEntete();
   majPuce();
-  if (el.hasAttribute('data-rerender')) rendreEtape();
+  // Les champs de saisie (texte, nombre) ne redessinent JAMAIS le formulaire : le champ serait remplacé en cours
+  // de frappe et le curseur repartirait à gauche. Seuls les choix (listes) peuvent changer les champs affichés.
+  if (el.hasAttribute('data-rerender') && el instanceof HTMLSelectElement) rendreEtape();
+  if (chemin === 'codePostal') {
+    const aide = el.closest('label')?.querySelector('.aide');
+    if (aide) aide.textContent = F.aideZone(etat.maison);
+  }
 }
 
 function action(nom: string, el: HTMLElement): void {

@@ -25,7 +25,7 @@ function enveloppe(label: string, controle: string, hint?: string, unite?: strin
   return (
     `<label class="champ"><span class="etiquette">${label}</span>` +
     (unite ? `<span class="avec-unite">${controle}<span class="unite">${unite}</span></span>` : controle) +
-    (hint ? `<span class="aide">${hint}</span>` : '') +
+    (hint !== undefined ? `<span class="aide">${hint}</span>` : '') +
     `</label>`
   );
 }
@@ -111,18 +111,24 @@ export function blocIsolation(prefixe: string, iso: Isolation): string {
 
 // --- Étape 1 : la maison -----------------------------------------------------------------------
 
-export function etapeMaison(m: Maison): string {
-  let zone = '';
+/** Indication affichée sous le code postal : département et zone climatique déduits. */
+export function aideZone(m: Maison): string {
+  // Pendant la frappe (1 à 4 chiffres), aucune indication : elle ne clignote qu'une fois le code complet.
+  if (/^\d{0,4}$/.test(m.codePostal.trim())) return '';
   try {
     const dep = departementDepuisCodePostal(m.codePostal);
     const z = m.zoneClimatique ?? ZONE_PAR_DEPARTEMENT[dep];
-    zone = z ? `Département ${dep}, zone climatique ${z}.` : 'Département hors métropole : non pris en charge.';
+    return z ? `Département ${dep}, zone climatique ${z}.` : 'Département hors métropole : non pris en charge.';
   } catch {
-    zone = m.codePostal ? 'Code postal à 5 chiffres.' : '';
+    return m.codePostal ? 'Code postal à 5 chiffres.' : '';
   }
+}
+
+export function etapeMaison(m: Maison): string {
+  const zone = aideZone(m);
   return (
     `<h2>Votre maison</h2><p class="intro">Quelques repères. Tout peut être modifié ensuite, et chaque « je ne sais pas » reçoit la valeur par défaut de la méthode.</p>` +
-    texte('codePostal', 'Code postal', m.codePostal, { rerender: true, placeholder: '37000', hint: zone }) +
+    texte('codePostal', 'Code postal', m.codePostal, { placeholder: '37000', hint: zone }) +
     nombre('anneeConstruction', 'Année de construction', m.anneeConstruction, { step: 1, min: 1800, max: new Date().getFullYear() }) +
     nombre('surfaceHabitable', 'Surface habitable', m.surfaceHabitable, { unite: 'm²', min: 9, max: 1000 }) +
     selection('niveaux', 'Nombre de niveaux', ['1', '2', '3', '4'].map((x): Opt => [x, x]), String(m.niveaux)) +
