@@ -1,0 +1,29 @@
+{
+  "name": "dpe-maison",
+  "version": "1.0.0",
+  "description": "Estimation du DPE d'une maison individuelle (méthode 3CL-DPE 2021), calculée dans le navigateur.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test \"test/**/*.test.mjs\" \"test/**/*.test.ts\"",
+    "dpe": "node scripts/run-json.mjs test/fixtures/maison-temoin-gaz.mjs --quiet",
+    "valider-references": "node scripts/validate-ref.ts",
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit -p .",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "@open3cl/engine": "^1.8.47",
+    "fast-xml-parser": "^5.11.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.4"
+  }
+}
